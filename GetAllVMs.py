@@ -58,6 +58,15 @@ def main():
       print("Annotation : ", annotation)
      print("State      : ", summary.runtime.powerState)
 
+     print("-" * 70)
+     print("Name:                    {0}".format(child["name"]))
+     print("BIOS UUID:               {0}".format(child["config.uuid"]))
+     print("CPUs:                    {0}".format(child["config.hardware.numCPU"]))
+     print("MemoryMB:                {0}".format(child["config.hardware.memoryMB"]))
+     print("Guest PowerState:        {0}".format(child["guest.guestState"]))
+     print("Guest Full Name:         {0}".format(child["config.guestFullName"]))
+     print("Guest Container Type:    {0}".format(child["config.guestId"]))
+     print("Container Version:       {0}".format(child["config.version"]))
 
 if __name__ == "__main__":
     main()
