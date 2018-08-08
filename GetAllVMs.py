@@ -45,6 +45,18 @@ def main():
     children = containerView.view
     for child in children:
      print(child)
+     summary = child.summary
+
+     print("Name       : ", summary.config.name)
+     print("Template   : ", summary.config.template)
+     print("Path       : ", summary.config.vmPathName)
+     print("Guest      : ", summary.config.guestFullName)
+     print("Instance UUID : ", summary.config.instanceUuid)
+     print("Bios UUID     : ", summary.config.uuid)
+     annotation = summary.config.annotation
+     if annotation:
+      print("Annotation : ", annotation)
+     print("State      : ", summary.runtime.powerState)
 
 
 if __name__ == "__main__":
