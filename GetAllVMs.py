@@ -41,10 +41,10 @@ def main():
 
     containerView = content.viewManager.CreateContainerView(container,
                                                             viewType,
-    root_folder = service_instance.content.rootFolder
-    view = pchelper.get_container_view(service_instance,
+    root_folder = si.content.rootFolder
+    view = pchelper.get_container_view(si,
                                    obj_type=[vim.VirtualMachine])
-    vm_data = pchelper.collect_properties(service_instance, view_ref=view,
+    vm_data = pchelper.collect_properties(, view_ref=view,
                                       obj_type=vim.VirtualMachine,
                                       path_set=vm_properties,
                                       include_mors=True)
