@@ -1,46 +1,48 @@
 #!/usr/bin/env python
+from __future__ import print_function
+import atexit
+from time import clock
+
+from pyVim import connect
 from pyVmomi import vim
 from tools import cli
-from pyVim.connect import SmartConnectNoSSL, Disconnect
-import atexit
-import getpass
-import time
-import platform
-import json
-start_time = time.time()
+from tools import pchelper
 
-print(platform.python_version())
+START = clock()
 
 
-def main():
+def endit():
+    """
+    times how long it took for this script to run.
+    :return:
+    """
+    end = clock()
+    total = end - START
+    print("Completion time: {0} seconds.".format(total))
+
+# List of properties.
+# See: http://goo.gl/fjTEpW
+# for all properties.
+    vm_properties = ["name", "config.uuid", "config.hardware.numCPU",
+                 "config.hardware.memoryMB", "guest.guestState",
+                 "config.guestFullName", "config.guestId",
+                 "config.version"]
 
     args = cli.get_args()
-
-    # Connect to the host without SSL signing
+    service_instance = None
     try:
-        si = SmartConnectNoSSL(
-            host=args.host,
-            user=args.user,
-            pwd=args.password,
-            port=int(args.port))
-        atexit.register(Disconnect, si)
-
+     service_instance = connect.SmartConnect(host=args.host,
+                                            user=args.user,
+                                            pwd=args.password,
+                                            port=int(args.port))
+    atexit.register(connect.Disconnect, service_instance)
+    atexit.register(endit)
     except IOError as e:
-        pass
+     pass
 
-    if not si:
-        raise SystemExit("Unable to connect to host with supplied info.")
+    if not service_instance:
+     raise SystemExit("Unable to connect to host with supplied info.")
 
-    content = si.RetrieveContent()
-
-    # create a list of vim.VirtualMachine objects so
-    # that we can query them for statistics
-    container = content.rootFolder
-    viewType = [vim.VirtualMachine]
-    recursive = True
-
-    containerView = content.viewManager.CreateContainerView(container,
-                                                            viewType,
     root_folder = si.content.rootFolder
     view = pchelper.get_container_view(si,
                                    obj_type=[vim.VirtualMachine])
@@ -61,6 +63,3 @@ def main():
 
 print("")
 print("Found {0} VirtualMachines.".format(len(vm_data)))
-if __name__ == "__main__":
-    main()
-    print("--- %s seconds ---" % (time.time() - start_time))
