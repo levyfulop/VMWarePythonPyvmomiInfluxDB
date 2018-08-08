@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-"""
- Written by Michael Rice
- Github: https://github.com/michaelrice
- Website: https://michaelrice.github.io/
- Blog: http://www.errr-online.com/
- This code has been released under the terms of the Apache 2 licenses
- http://www.apache.org/licenses/LICENSE-2.0.html
- Script to quickly get all the VMs with a set of common properties.
-"""
 from __future__ import print_function
 import atexit
 from time import clock
@@ -18,6 +8,16 @@ from tools import cli
 from tools import pchelper
 
 START = clock()
+
+
+def GetVMHosts(content):
+    print("Getting all ESX hosts ...")
+    host_view = content.viewManager.CreateContainerView(content.rootFolder,
+                                                        [vim.HostSystem],
+                                                        True)
+    obj = [host for host in host_view.view]
+    host_view.Destroy()
+    return obj
 
 
 def endit():
@@ -32,11 +32,13 @@ def endit():
 # List of properties.
 # See: http://goo.gl/fjTEpW
 # for all properties.
-vm_properties = ["name", "config.uuid", "config.hardware.numCPU",
-                 "config.hardware.memoryMB", "guest.guestState",
-                 "config.guestFullName", "config.guestId",
-                 "config.version"]
 
+vm_properties = ["name", "config.hardware.numCPU","guest.hostName","guest.toolsVersion","guest.guestFamily","config.managedBy",
+                 "config.hardware.memoryMB", "guest.guestState","summary.config.numVirtualDisks","runtime.host",
+                 "config.guestFullName", "config.guestId",
+                 "config.version","summary.guest.toolsRunningStatus",
+                 "summary.config.numEthernetCards","config.template","summary.runtime.powerState","summary.config.vmPathName"]
+#"guest.ipStack"
 args = cli.get_args()
 service_instance = None
 try:
@@ -52,24 +54,75 @@ except IOError as e:
 if not service_instance:
     raise SystemExit("Unable to connect to host with supplied info.")
 
+
+content_h = service_instance.RetrieveContent()
+hosts = GetVMHosts(content_h)
+
 root_folder = service_instance.content.rootFolder
 view = pchelper.get_container_view(service_instance,
                                    obj_type=[vim.VirtualMachine])
+
 vm_data = pchelper.collect_properties(service_instance, view_ref=view,
                                       obj_type=vim.VirtualMachine,
                                       path_set=vm_properties,
                                       include_mors=True)
 for vm in vm_data:
+    if vm.has_key("runtime.host"):
+      print("*" * 70)
+      print("in if")
+      vmHost = format((vm["runtime.host"]).name)
+      print(vmHost)
+    else:
+      vmHost = ''
+
+#    host_pos = hosts.index(vmHost)
+#    viewHost = hosts[host_pos]
+
     print("-" * 70)
+    print("FullObject:              {0}".format(vm))
     print("Name:                    {0}".format(vm["name"]))
-    print("BIOS UUID:               {0}".format(vm["config.uuid"]))
+    print(                          vmHost)
     print("CPUs:                    {0}".format(vm["config.hardware.numCPU"]))
-    print("MemoryMB:                {0}".format(
-        vm["config.hardware.memoryMB"]))
+    print("MemoryMB:                {0}".format(vm["config.hardware.memoryMB"]))
     print("Guest PowerState:        {0}".format(vm["guest.guestState"]))
     print("Guest Full Name:         {0}".format(vm["config.guestFullName"]))
     print("Guest Container Type:    {0}".format(vm["config.guestId"]))
     print("Container Version:       {0}".format(vm["config.version"]))
+
+    VMName = format(vm["name"])
+    VMToolsStatus = format(vm["summary.guest.toolsRunningStatus"])
+    if not VMToolsStatus == "guestToolsNotRunning":
+        passVMHostName = format(vm["guest.hostName"])
+    VMHostVM = vmHost
+    if vm.has_key("guest.guestFamily"):
+        VMTypeShort = format(vm["guest.guestFamily"])
+    else:
+        VMTypeShort = ""
+    VMTypeDetail = format(vm["config.guestId"])
+    VMTypeLong = format(vm["config.guestFullName"])
+    VMHardWareVersion = format(vm["config.version"])
+
+    if vm.has_key("guest.toolsVersion"):
+        VMToolsVersion = format(vm["guest.toolsVersion"])
+    else:
+        VMToolsVersion = 0
+
+    VMvCPU = int(format(vm["config.hardware.numCPU"]))
+    VMRAM_MB = (int(format(vm["config.hardware.memoryMB"])) /1024)
+    VMPowerState = format(vm["summary.runtime.powerState"])
+    VMPathDatastore = format(vm["summary.config.vmPathName"])
+    VMNetworkCardCount = format(vm["summary.config.numEthernetCards"])
+    VMVirtualDisksCount = format(vm["summary.config.numVirtualDisks"])
+    VMTemplate = format(vm["config.template"])
+
+
+
+
+
+
+
+
+
 
 
 print("")
