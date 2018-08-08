@@ -6,9 +6,13 @@ from pyVim import connect
 from pyVmomi import vim
 from tools import cli
 from tools import pchelper
+import os
+from datetime import datetime
+import time
 
 START = clock()
 
+print(time.time())
 
 def GetVMHosts(content):
     print("Getting all ESX hosts ...")
@@ -40,6 +44,7 @@ vm_properties = ["name", "config.hardware.numCPU","guest.hostName","guest.toolsV
                  "summary.config.numEthernetCards","config.template","summary.runtime.powerState","summary.config.vmPathName"]
 #"guest.ipStack"
 args = cli.get_args()
+print(args)
 service_instance = None
 try:
     service_instance = connect.SmartConnect(host=args.host,
@@ -56,6 +61,7 @@ if not service_instance:
 
 
 content_h = service_instance.RetrieveContent()
+
 hosts = GetVMHosts(content_h)
 
 root_folder = service_instance.content.rootFolder
@@ -121,8 +127,8 @@ for vm in vm_data:
 
 
 
-
-
+    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter=amsvc02,VMName=" + VMName +" CPU_Sage_MHZ=22,MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 1481122078763913492'"
+    os.system(cmd)
 
 
 
