@@ -41,33 +41,26 @@ def main():
 
     containerView = content.viewManager.CreateContainerView(container,
                                                             viewType,
-                                                            recursive)
-    children = containerView.view
-    for child in children:
-     print(child)
-     summary = child.summary
-
-     print("Name       : ", summary.config.name)
-     print("Template   : ", summary.config.template)
-     print("Path       : ", summary.config.vmPathName)
-     print("Guest      : ", summary.config.guestFullName)
-     print("Instance UUID : ", summary.config.instanceUuid)
-     print("Bios UUID     : ", summary.config.uuid)
-     annotation = summary.config.annotation
-     if annotation:
-      print("Annotation : ", annotation)
-     print("State      : ", summary.runtime.powerState)
-
+    root_folder = service_instance.content.rootFolder
+    view = pchelper.get_container_view(service_instance,
+                                   obj_type=[vim.VirtualMachine])
+    vm_data = pchelper.collect_properties(service_instance, view_ref=view,
+                                      obj_type=vim.VirtualMachine,
+                                      path_set=vm_properties,
+                                      include_mors=True)
+    for vm in vm_data:
      print("-" * 70)
-     print("Name:                    {0}".format(child["name"]))
-     print("BIOS UUID:               {0}".format(child["config.uuid"]))
-     print("CPUs:                    {0}".format(child["config.hardware.numCPU"]))
-     print("MemoryMB:                {0}".format(child["config.hardware.memoryMB"]))
-     print("Guest PowerState:        {0}".format(child["guest.guestState"]))
-     print("Guest Full Name:         {0}".format(child["config.guestFullName"]))
-     print("Guest Container Type:    {0}".format(child["config.guestId"]))
-     print("Container Version:       {0}".format(child["config.version"]))
+     print("Name:                    {0}".format(vm["name"]))
+     print("BIOS UUID:               {0}".format(vm["config.uuid"]))
+     print("CPUs:                    {0}".format(vm["config.hardware.numCPU"]))
+     print("MemoryMB:                {0}".format(vm["config.hardware.memoryMB"]))
+     print("Guest PowerState:        {0}".format(vm["guest.guestState"]))
+     print("Guest Full Name:         {0}".format(vm["config.guestFullName"]))
+     print("Guest Container Type:    {0}".format(vm["config.guestId"]))
+     print("Container Version:       {0}".format(vm["config.version"]))
 
+print("")
+print("Found {0} VirtualMachines.".format(len(vm_data)))
 if __name__ == "__main__":
     main()
     print("--- %s seconds ---" % (time.time() - start_time))
