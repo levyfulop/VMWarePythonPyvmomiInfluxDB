@@ -13,12 +13,14 @@ import numpy as np
 
 START = clock()
 
+
+#read the vCenters Config File
+vCentersCSVArray = np.genfromtxt('./Config/vCenters.csv', delimiter=";",dtype=None,skip_header=1)
+
+
 d = (datetime.now()).strftime('%s.%f')
 d_in_ms = int(float(d)*1000000000)
 print(d_in_ms)
-
-#read the vCenters Config File
-csv = np.genfromtxt('./Config/vCenters.csv', delimiter=";",dtype=None,skip_header=1)
 
 def GetVMHosts(content):
     print("Getting all ESX hosts ...")
@@ -114,8 +116,8 @@ for vm in vm_data:
     VMHostVM = vmHost
     if vm.has_key("guest.guestFamily"):
         VMTypeShort = format(vm["guest.guestFamily"])
-    else:
-        VMTypeShort = ""
+#    else:
+#        VMTypeShort = ""
     VMTypeDetail = format(vm["config.guestId"])
     VMTypeLong = format(vm["config.guestFullName"])
     VMHardWareVersion = format(vm["config.version"])
@@ -138,8 +140,7 @@ for vm in vm_data:
     VMTemplate = format(vm["config.template"])
 
 
-
-    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter=amsvc02,VMName=" + quote_ident(VMName) +",VMPowerState="+ quote_ident(VMPowerState) +",VMHostVM="+ quote_ident(VMHostVM) +" MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 " + str(d_in_ms) + "'"
+    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter="+ quote_ident(vCentersCSVArray[0][0]) +",VMName=" + quote_ident(VMName) +",VMPowerState="+ quote_ident(VMPowerState) +",VMHostVM="+ quote_ident(VMHostVM) + format(if VMTypeShort: "VMTypeShort="quote_ident("VMTypeShort) else: "")  + " MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 " + str(d_in_ms) + "'"
     print(cmd)
     os.system(cmd)
 
