@@ -12,7 +12,9 @@ import time
 
 START = clock()
 
-print(time.time())
+d = (datetime.now()).strftime('%s.%f')
+d_in_ms = int(float(d)*1000000000)
+print(d_in_ms)
 
 def GetVMHosts(content):
     print("Getting all ESX hosts ...")
@@ -23,6 +25,13 @@ def GetVMHosts(content):
     host_view.Destroy()
     return obj
 
+def quote_ident(value):
+    """Indent the quotes."""
+    return "{0}".format(value
+                           .replace("\\", "\\\\")
+                           .replace("\"", "\\\"")
+                           .replace("\n", "\\n")
+                           .replace(" ", "\ "))
 
 def endit():
     """
@@ -61,7 +70,6 @@ if not service_instance:
 
 
 content_h = service_instance.RetrieveContent()
-
 hosts = GetVMHosts(content_h)
 
 root_folder = service_instance.content.rootFolder
@@ -127,7 +135,8 @@ for vm in vm_data:
 
 
 
-    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter=amsvc02,VMName=" + VMName +" CPU_Sage_MHZ=22,MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 1481122078763913492'"
+    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter=amsvc02,VMName=" + quote_ident(VMName) +",VMPowerState="+ quote_ident(VMPowerState) +",VMHostVM="+ quote_ident(VMHostVM) +" MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 " + str(d_in_ms) + "'"
+    print(cmd)
     os.system(cmd)
 
 
