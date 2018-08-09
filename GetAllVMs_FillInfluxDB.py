@@ -9,12 +9,16 @@ from tools import pchelper
 import os
 from datetime import datetime
 import time
+import numpy as np
 
 START = clock()
 
 d = (datetime.now()).strftime('%s.%f')
 d_in_ms = int(float(d)*1000000000)
 print(d_in_ms)
+
+#read the vCenters Config File
+csv = np.genfromtxt('./Config/vCenters.csv', delimiter=";",dtype=None,skip_header=1)
 
 def GetVMHosts(content):
     print("Getting all ESX hosts ...")
