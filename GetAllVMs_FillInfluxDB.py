@@ -140,7 +140,15 @@ for vm in vm_data:
     VMTemplate = format(vm["config.template"])
 
 
-    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory --data-binary  'Current_VMs_Inventory,vCenter="+ quote_ident(vCentersCSVArray[0][0]) +",VMName=" + quote_ident(VMName) +",VMPowerState="+ quote_ident(VMPowerState) +",VMHostVM="+ quote_ident(VMHostVM) + ((",VMTypeShort=" + quote_ident(VMTypeShort)) if not VMTypeShort=="" else '')  + " MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 " + str(d_in_ms) + "'"
+    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory  --data-binary "
+    cmd = cmd + "'Current_VMs_Inventory,vCenter=" + quote_ident(vCentersCSVArray[0][0])
+    cmd = cmd + (",VMName=" + quote_ident(VMName))
+    cmd = cmd + (",PowerState=" + quote_ident (VMPowerState))
+    cmd = cmd + (",VMHostVM="+ quote_ident(VMHostVM))
+    cmd = cmd + ((",VMTypeShort=" + quote_ident(VMTypeShort)) if not VMTypeShort=="" else '')
+    cmd = cmd + " MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 "
+    cmd = cmd + str(d_in_ms) + "'"
+
     print(cmd)
     os.system(cmd)
 
