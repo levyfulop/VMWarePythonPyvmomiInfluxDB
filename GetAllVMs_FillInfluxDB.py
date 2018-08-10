@@ -113,14 +113,28 @@ for vm in vm_data:
     VMToolsStatus = format(vm["summary.guest.toolsRunningStatus"])
     if not VMToolsStatus == "guestToolsNotRunning":
         passVMHostName = format(vm["guest.hostName"])
+
     VMHostVM = vmHost
+
     if vm.has_key("guest.guestFamily"):
         VMTypeShort = format(vm["guest.guestFamily"])
     else:
         VMTypeShort = ""
-    VMTypeDetail = format(vm["config.guestId"])
-    VMTypeLong = format(vm["config.guestFullName"])
-    VMHardWareVersion = format(vm["config.version"])
+
+    if vm.has_key("config.guestId"):
+     VMTypeDetail = format(vm["config.guestId"])
+    else:
+     VMTypeDetail = ""
+
+    if vm.has_key("config.guestFullName"):
+     VMTypeLong = format(vm["config.guestFullName"])
+    else:
+     VMTypeLong = ""
+
+    if vm.has_key("config.version"):
+     VMHardWareVersion = format(vm["config.version"])
+    else:
+     VMHardWareVersion = ""
 
     if vm.has_key("guest.toolsVersion"):
         VMToolsVersion = format(vm["guest.toolsVersion"])
@@ -129,15 +143,34 @@ for vm in vm_data:
 
     VMvCPU = int(format(vm["config.hardware.numCPU"]))
     VMRAM_MB = (int(format(vm["config.hardware.memoryMB"])) /1024)
-    VMPowerState = format(vm["summary.runtime.powerState"])
-    VMPathDatastore = format(vm["summary.config.vmPathName"])
-    FirstOccurence = int(VMPathDatastore.find("[") + 1)
-    FirstOfLastOccurence = VMPathDatastore.find("]")
 
-    VMPathDatastore = VMPathDatastore[FirstOccurence:FirstOfLastOccurence]
-    VMNetworkCardCount = format(vm["summary.config.numEthernetCards"])
-    VMVirtualDisksCount = format(vm["summary.config.numVirtualDisks"])
-    VMTemplate = format(vm["config.template"])
+    if vm.has_key("summary.runtime.powerState"):
+     VMPowerState = format(vm["summary.runtime.powerState"])
+    else:
+     VMPowerState = ""
+
+    if vm.has_key("summary.config.vmPathName"):
+     VMPathDatastore = format(vm["summary.config.vmPathName"])
+     FirstOccurence = int(VMPathDatastore.find("[") + 1)
+     FirstOfLastOccurence = VMPathDatastore.find("]")
+     VMPathDatastore = VMPathDatastore[FirstOccurence:FirstOfLastOccurence]
+    else:
+     VMPathDatastore = ""
+
+    if vm.has_key("summary.config.numEthernetCards"):
+     VMNetworkCardCount = format(vm["summary.config.numEthernetCards"])
+    else:
+     VMNetworkCardCount = ""
+
+    if vm.has_key("summary.config.numVirtualDisks"):
+     VMVirtualDisksCount = format(vm["summary.config.numVirtualDisks"])
+    else:
+     VMVirtualDisksCount = ""
+
+    if vm.has_key("config.template"):
+     VMTemplate = format(vm["config.template"])
+    else:
+     VMTemplate = ""
 
 
     cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory  --data-binary "
@@ -146,6 +179,8 @@ for vm in vm_data:
     cmd = cmd + (",PowerState=" + quote_ident (VMPowerState))
     cmd = cmd + (",VMHostVM="+ quote_ident(VMHostVM))
     cmd = cmd + ((",VMTypeShort=" + quote_ident(VMTypeShort)) if not VMTypeShort=="" else '')
+    cmd = cmd + ((",VMTypeLong=" + quote_ident(VMTypeLong)) if not VMTypeLong=="" else '')
+    cmd = cmd + ((",VMTypeDetail=" + quote_ident(VMTypeDetail)) if not VMTypeDetail=="" else '')
     cmd = cmd + " MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 "
     cmd = cmd + str(d_in_ms) + "'"
 
