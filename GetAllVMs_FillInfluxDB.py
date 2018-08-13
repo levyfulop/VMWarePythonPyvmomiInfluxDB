@@ -139,7 +139,7 @@ for vm in vm_data:
     if vm.has_key("guest.toolsVersion"):
         VMToolsVersion = format(vm["guest.toolsVersion"])
     else:
-        VMToolsVersion = 0
+        VMToolsVersion = ""
 
     VMvCPU = int(format(vm["config.hardware.numCPU"]))
     VMRAM_MB = (int(format(vm["config.hardware.memoryMB"])) /1024)
@@ -173,7 +173,7 @@ for vm in vm_data:
      VMTemplate = ""
 
 
-    cmd = "curl -vvv -i -XPOST http://localhost:8086/write?db=VMInventory  --data-binary "
+    cmd = "curl -XPOST http://localhost:8086/write?db=VMInventory  --data-binary "
     cmd = cmd + "'Current_VMs_Inventory,vCenter=" + quote_ident(vCentersCSVArray[0][0])
     cmd = cmd + (",VMName=" + quote_ident(VMName))
     cmd = cmd + (",PowerState=" + quote_ident (VMPowerState))
@@ -181,8 +181,17 @@ for vm in vm_data:
     cmd = cmd + ((",VMTypeShort=" + quote_ident(VMTypeShort)) if not VMTypeShort=="" else '')
     cmd = cmd + ((",VMTypeLong=" + quote_ident(VMTypeLong)) if not VMTypeLong=="" else '')
     cmd = cmd + ((",VMTypeDetail=" + quote_ident(VMTypeDetail)) if not VMTypeDetail=="" else '')
-    cmd = cmd + " MEM_UsageGB=75.00,CPURDY=3.24,CPUCount=2 "
-    cmd = cmd + str(d_in_ms) + "'"
+    cmd = cmd + ((",VMToolsStatus=" + quote_ident(VMToolsStatus)) if not VMToolsStatus=="" else '')
+    cmd = cmd + ((",VMToolsVersion=" + quote_ident(VMToolsVersion)) if not VMToolsVersion=="" else '')
+    cmd = cmd + ((",VMHardWareVersion=" + quote_ident(VMHardWareVersion)) if not VMHardWareVersion=="" else '')
+    cmd = cmd + ((",VMPathDatastore=" + quote_ident(VMPathDatastore)) if not VMPathDatastore=="" else '')
+    cmd = cmd + ((",VMTemplate=" + quote_ident(VMTemplate)) if not VMTemplate=="" else '')
+    cmd = cmd + ((" VMvCPU=" + str(VMvCPU)) if not VMvCPU=="" else '')
+    cmd = cmd + ((",VMRAM_MB=" + str(VMRAM_MB)) if not VMRAM_MB=="" else '')
+    cmd = cmd + ((",VMNetworkCardCount=" + str(VMNetworkCardCount)) if not VMNetworkCardCount=="" else '')
+    cmd = cmd + ((",VMVirtualDisksCount=" + str(VMVirtualDisksCount)) if not VMVirtualDisksCount=="" else '')
+
+    cmd = cmd + " " + str(d_in_ms) + "'"
 
     print(cmd)
     os.system(cmd)
