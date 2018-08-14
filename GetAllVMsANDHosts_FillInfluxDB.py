@@ -11,6 +11,7 @@ from datetime import datetime
 import time
 import numpy as np
 import humanize
+import sys
 
 START = clock()
 MBFACTOR = float(1 << 20)
@@ -33,7 +34,17 @@ def GetVMHosts(content):
     host_view.Destroy()
     return obj
 
-#def Host2Dict(dc, cluster, host, NumCpuPackages, ESXiObject]#, NumCpuCores, NumCpuThreads, MemorySize, BiosInfo,Vendor, Model, ESXiFullName,ESXiVersion, ESXiBuild,ESXiObject):
+def quote_ident(value):
+    """Indent the quotes."""
+    return "{0}".format(value
+                           .replace("\\", "\\\\")
+                           .replace("\"", "\\\"")
+                           .replace("\n", "\\n")
+                           .replace(" ", "\ "))
+
+
+def Host2Dict(dc, cluster, hostname, ESXiObject):
+    #dc.name, cluster.name, hostname, xhost
     hardware = ESXiObject.hardware
 
     memorySize = ESXiObject.hardware.memorySize
@@ -54,21 +65,13 @@ def GetVMHosts(content):
     HypervisorHyperThreadactive = ESXiObject.config.hyperThread.active
 
 #    print(hardware)
-    print(NumCpuCores)
-
+#    print(NumCpuCores)
+#    sys.exit(0)
 #    data['NumCpuPackages'] = ESXiObject[hardware.cpuinfo.NumCpuPackages]
-    #data[dc][cluster][host]['mem'] = ESXiObject[hardware.SystemInfo]
-    data[dc][cluster][host]['NumCpuPackages'] = ESXiObject[hardware.CpuInfo]
-    data[dc][cluster][host]['mem'] = ESXiObject[hardware.SystemInfo]
-    sys.exit(0)
 
-def quote_ident(value):
-    """Indent the quotes."""
-    return "{0}".format(value
-                           .replace("\\", "\\\\")
-                           .replace("\"", "\\\"")
-                           .replace("\n", "\\n")
-                           .replace(" ", "\ "))
+#    data[dc][cluster][host]['mem'] = {}
+#    data[dc][cluster][host]['mem'] = memorySize
+#    print(data)
 
 def printHostInformation(host):
     try:
@@ -88,8 +91,8 @@ def printHostInformation(host):
         print("Host memory: {0}".format( humanize.naturalsize(memoryCapacity,binary=True)))
         print("-" * 70)
     except Exception as error:
-        print "Unable to access information for host: "
-        print error
+        print("Unable to access information for host")
+        print(error)
         pass
 
 def printComputeResourceInformation(computeResource):
@@ -101,8 +104,7 @@ def printComputeResourceInformation(computeResource):
         for host in hostList:
             printHostInformation(host)
     except Exception as error:
-        print("Unable to access information for compute resource: ",
-              computeResource.name)
+        print("Unable to access information for compute resource ")
         print(error)
         pass
 
@@ -143,7 +145,53 @@ if not service_instance:
 
 
 content_h = service_instance.RetrieveContent()
-hosts = GetVMHosts(content_h)
+#hosts = GetVMHosts(content_h)
+
+#for xhost in hosts:
+ #data[xhost] = {}
+
+children = content_h.rootFolder.childEntity
+
+for child in children:  # Iterate though DataCenters
+  dc = child
+  data[dc.name] = {}  # Add data Centers to data dict
+  clusters = dc.hostFolder.childEntity
+
+  for cluster in clusters:  # Iterate through the clusters in the DC
+    # Add Clusters to data dict
+    data[dc.name][cluster.name] = {}
+    hosts = cluster.host  # Variable to make pep8 compliance
+    for host in hosts:  # Iterate through Hosts in the Cluster
+     hostname = host.summary.config.name
+     print(hostname)
+     # Add VMs to data dict by config name
+     data[dc.name][cluster.name][hostname] = {}
+#     Host2Dict(dc.name, cluster.name, hostname, host)
+     ESXiObject = host
+#     hardware = ESXiObject.hardware
+
+     memorySize = ESXiObject.hardware.memorySize
+     vendor = ESXiObject.hardware.systemInfo.vendor
+     model = ESXiObject.hardware.systemInfo.model
+     PowerPolicy = ESXiObject.hardware.cpuPowerManagementInfo.currentPolicy
+
+     data[dc.name][cluster.name][hostname]['powerpolicy'] = PowerPolicy
+     print(data[dc.name])
+     sys.exit(0)
+     NumCpuCores = ESXiObject.hardware.cpuInfo.numCpuCores
+     NumCpuThreads = ESXiObject.hardware.cpuInfo.numCpuThreads
+     NumCpuPackages = ESXiObject.hardware.cpuInfo.numCpuPackages
+
+     Uptime = ESXiObject.summary.quickStats.uptime
+     ConnectionState = ESXiObject.runtime.connectionState
+
+     Hypervisor = ESXiObject.config.product.fullName
+     HypervisorVersion = ESXiObject.config.product.version
+     HypervisorBuild = ESXiObject.config.product.build
+     HypervisorHyperThreadactive = ESXiObject.config.hyperThread.active
+     print(HypervisorHyperThreadactive)
+sys.exit(0)
+
 
 #Trying to get the full VMHost data (including the datacenters)
 for datacenter in content_h.rootFolder.childEntity:
