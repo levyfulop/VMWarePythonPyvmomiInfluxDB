@@ -81,17 +81,33 @@ if not service_instance:
 content_h = service_instance.RetrieveContent()
 children = content_h.rootFolder.childEntity
 
+print("Just got Datacenters")
+TimeNow = clock()
+totalNow = TimeNow - START
+print(totalNow)
+
 for child in children:  # Iterate though DataCenters
   dc = child
   clusters = dc.hostFolder.childEntity
 
+  print("Cluster")
+  TimeNow = clock()
+  totalNow = TimeNow - START
+  print(totalNow)
+
   for cluster in clusters:  # Iterate through the clusters in the DC
     # Add Clusters to data dict
     hosts = cluster.host  # Variable to make pep8 compliance
+    print("Host")
+    TimeNow = clock()
+    totalNow = TimeNow - START
+    print(totalNow)
+
     for host in hosts:  # Iterate through Hosts in the Cluster
-     hostname = host.summary.config.name
+     print("next")
      # Add VMs to data dict by config name
      ESXiObject = host
+     hostname = ESXiObject.summary.config.name
 
      memorySize = ESXiObject.hardware.memorySize
      vendor = ESXiObject.hardware.systemInfo.vendor
