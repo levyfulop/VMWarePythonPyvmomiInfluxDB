@@ -1,24 +1,23 @@
 #!/usr/bin/python
-'''
-Written by Gaurav Dogra
-Github: https://github.com/dograga
-Script to extract vm performance data
-'''
 import atexit
 from pyVmomi import vim
 from pyVim.connect import SmartConnect, Disconnect
 import time
 import datetime
+from datetime import datetime, date
 from pyVmomi import vmodl
 from threading import Thread
 from pyVim import connect
 from pyVmomi import vim
 from tools import cli
+from decimal import Decimal
+import resource
+resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
 
 
 class perfdata():
    def perfcounters(self):
-      perfcounter=['cpu.usage.average','mem.usage.average']
+      perfcounter=['cpu.ready.summation','cpu.usage.average','mem.usage.average','net.usage.average','datastore.totalWriteLatency.average','datastore.totalReadLatency.average','disk.numberWrite.summation','disk.numberRead.summation']
       return perfcounter
 
    def run(self,content,vm,counter_name):
@@ -27,38 +26,25 @@ class perfdata():
           perf_dict = {}
           perfManager = content.perfManager
           perfList = content.perfManager.perfCounter
-#          print(perfList)
           for counter in perfList: #build the vcenter counters for the objects
-              counter_full = "{0}.{0}.{0}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
-#              perf_dict[counter_full] = counter.key
-              perf_dict[counter_full] = 6
-#              counterIDs = [m.counterId for m in
-#                            perfManager.QueryAvailablePerfMetric(entity=vm)]
-#              print(counterIDs)
-#          counterId = perf_dict[counter_name]
-          counterId = 6
-          metricId = vim.PerformanceManager.MetricId(counterId=counterId, instance="")
-          print(metricId)
-          timenow=datetime.datetime.now()
-          startTime = timenow - datetime.timedelta(hours=2)
-          print startTime
-          endTime = timenow
-#          query = vim.PerformanceManager.QuerySpec(entity=vm,metricId=[metricId],startTime=startTime,endTime=endTime,maxSample=10)
-          query = vim.PerformanceManager.QuerySpec(entity=vm,metricId=[metricId],maxSample=1)
+              counter_full = "{0}.{1}.{2}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
+              perf_dict[counter_full] = counter.key
+          counterId = perf_dict[counter_name]
+          metricId = vim.PerformanceManager.MetricId(counterId=counterId,instance="")
+#          query = vim.PerformanceManager.QuerySpec(entity=vm,metricId=[metricId],startTime=startTimeendTime,maxSample=60)
+          query = vim.PerformanceManager.QuerySpec(entity=vm,intervalId=20,metricId=[metricId])
 
-#          print(query)
           stats=perfManager.QueryPerf(querySpec=[query])
           count=0
-          for val in stats[0].value[0].value:
+          if len(stats) > 0:
+           for val in stats[0].value[0].value:
               perfinfo={}
-#              val=float(val/100)
-              val=val
-              perfinfo['timestamp']=stats[0].sampleInfo[count].timestamp
+              val = "%.2f" % (float(val)/100.00)
+              perfinfo['timestamp']= (datetime.strptime(str(stats[0].sampleInfo[count].timestamp), "%Y-%m-%d %H:%M:%S+00:00"))
               perfinfo['hostname']=vm.name
               perfinfo['value']=val
               output.append(perfinfo)
               count+=1
- #             print(val)
           for out in output:
               print "Counter: {0} Hostname: {1}  TimeStame: {2} Usage: {3}".format (counter_name,out['hostname'],out['timestamp'],out['value'])
 #       except vmodl.MethodFault as e:
@@ -83,15 +69,24 @@ def main():
    content = si.RetrieveContent()
    perf=perfdata()
    counters=perf.perfcounters()
-   print(perf)
-   print(counters)
-   search_index=content.searchIndex
-   vm=search_index.FindByIp(None, vmip, True)
-   print(vm)
-   ##vm=search_index.FindByDnsName(None, vmdnsname, True)     //vm dnsname is Hostname as reported by vmtool
-   for counter in counters:
+
+   container = content.rootFolder
+   viewType = [vim.VirtualMachine]
+   recursive = True
+
+   containerView = content.viewManager.CreateContainerView(container,
+                                                            viewType,
+                                                            recursive)
+   children = containerView.view
+   for child in children:
+    search_index=content.searchIndex
+    vm=child
+    print(vm)
+    for counter in counters:
         p = Thread(target=perf.run,args=(content,vm,counter,))
-        p.start()
+        if vm.summary.runtime.powerState == 'poweredOn':
+         p.start()
+         time.sleep(.100)
 
 # start
 if __name__ == "__main__":
